@@ -24,13 +24,23 @@ const pdfOptions = {
   standardFontDataUrl: PDF_STANDARD_FONT_DATA_URL,
 };
 
+// react-pdf に uri をそのまま読ませるため、
+// react-doc-viewer 側の既定先読みは行わない。
+const passthroughFileLoader: NonNullable<DocRenderer['fileLoader']> = ({
+  fileLoaderComplete,
+}) => {
+  fileLoaderComplete();
+};
+
 // PDF 内の日本語文字化けを避けるため、標準の PDFRenderer ではなく react-pdf で描画する
 const PdfRenderer: DocRenderer = ({ mainState }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState<number>();
   const [numPages, setNumPages] = useState(0);
   const [scale, setScale] = useState(PDF_DEFAULT_SCALE);
-  const file = mainState.currentDocument?.fileData ?? mainState.currentDocument?.uri;
+  const file = useMemo(() => mainState.currentDocument?.uri, [
+    mainState.currentDocument?.uri,
+  ]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -112,6 +122,6 @@ const PdfRenderer: DocRenderer = ({ mainState }) => {
 
 PdfRenderer.fileTypes = DefaultPDFRenderer.fileTypes;
 PdfRenderer.weight = DefaultPDFRenderer.weight;
-PdfRenderer.fileLoader = DefaultPDFRenderer.fileLoader;
+PdfRenderer.fileLoader = passthroughFileLoader;
 
 export default PdfRenderer;
